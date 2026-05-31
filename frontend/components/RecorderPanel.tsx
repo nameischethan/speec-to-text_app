@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 
-export default function RecorderPanel() {
+type RecorderPanelProps = {
+  setTranscript: (text: string) => void;
+};
+
+export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -20,18 +25,48 @@ export default function RecorderPanel() {
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
       setAudioURL("");
+      setTranscript("");
 
       mediaRecorder.ondataavailable = (event) => {
         chunksRef.current.push(event.data);
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, {
           type: "audio/webm",
         });
 
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
+
+        try {
+          setIsLoading(true);
+
+          const file = new File([blob], "speech.webm", {
+            type: "audio/webm",
+          });
+
+          const form = new FormData();
+          form.append("file", file);
+
+          const response = await fetch("http://127.0.0.1:5000/transcribe", {
+            method: "POST",
+            body: form,
+          });
+
+          const data = await response.json();
+
+          if (data.transcript) {
+            setTranscript(data.transcript);
+          } else {
+            alert("No transcript returned");
+          }
+        } catch (error) {
+          console.error(error);
+          alert("Transcription failed");
+        } finally {
+          setIsLoading(false);
+        }
 
         console.log("Audio Blob:", blob);
       };
@@ -61,7 +96,7 @@ export default function RecorderPanel() {
       <div className="flex gap-2">
         <button
           onClick={startRecording}
-          disabled={isRecording}
+          disabled={isRecording || isLoading}
           className="px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
         >
           Start Recording
@@ -84,6 +119,10 @@ export default function RecorderPanel() {
         >
           Download Audio
         </a>
+      )}
+
+      {isLoading && (
+        <p className="mt-4 text-blue-600">Transcribing audio...</p>
       )}
     </div>
   );
