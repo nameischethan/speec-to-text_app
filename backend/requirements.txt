@@ -43,6 +43,7 @@ async-lru @ file:///Users/builder/cbouss/perseverance-python-buildout/croot/asyn
 asyncssh @ file:///Users/builder/cbouss/buildout/croot/asyncssh_1732921222384/work
 atomicwrites==1.4.0
 attrs @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_93pjmt0git/croot/attrs_1734533120523/work
+audioop-lts==0.2.2
 Automat @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_ddy0059olt/croot/automat_1743532570194/work
 autopep8 @ file:///croot/autopep8_1708962882016/work
 babel @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_ed2j11k3aq/croot/babel_1737454371799/work
