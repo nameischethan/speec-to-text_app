@@ -20,7 +20,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
   const chunkIndexRef = useRef(0);
 
   useEffect(() => {
-    const socket = io("http://localhost:5001", {
+    const socket = io("https://speech-to-text-app-8p3b.onrender.com", {
       transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
@@ -116,7 +116,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("http://localhost:5001/transcribe", {
+          const response = await fetch("http://https://speech-to-text-app-8p3b.onrender.com/transcribe", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
