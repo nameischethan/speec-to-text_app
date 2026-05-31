@@ -61,13 +61,20 @@ os.makedirs(CHUNK_FOLDER, exist_ok=True)
 
 
 def get_db_connection():
+    database_url = os.getenv("DATABASE_URL")
+
+    if database_url:
+        return psycopg2.connect(
+            database_url,
+            cursor_factory=RealDictCursor,
+        )
+
     return psycopg2.connect(
         dbname=DB_NAME,
         user=DB_USER,
         host=DB_HOST,
         cursor_factory=RealDictCursor,
     )
-
 
 def generate_token(user_id):
     return jwt.encode({"user_id": user_id}, JWT_SECRET, algorithm="HS256")
