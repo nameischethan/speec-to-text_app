@@ -9,3 +9,4 @@ pydub
 bcrypt
 gunicorn
 simple-websocket
+audioop-lts
