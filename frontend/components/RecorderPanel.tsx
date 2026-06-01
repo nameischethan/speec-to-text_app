@@ -12,32 +12,36 @@ const API_URL = "https://speech-to-text-app-8p3b.onrender.com";
 export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [socketStatus, setSocketStatus] = useState("Connecting...");
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     const socket = io(API_URL, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
+      timeout: 20000,
     });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      setSocketStatus("Connected");
       console.log("Socket connected:", socket.id);
+      setSocketStatus("Connected");
     });
 
     socket.on("disconnect", () => {
+      console.log("Socket disconnected");
       setSocketStatus("Disconnected");
     });
 
     socket.on("connect_error", (error) => {
       console.error("Socket error:", error);
-      setSocketStatus("Connection Failed");
+      setSocketStatus("Retrying...");
     });
 
     return () => {
@@ -54,8 +58,14 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
       return;
     }
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Microphone is not supported on this browser");
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -68,48 +78,70 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
           chunksRef.current.push(event.data);
 
           if (socketRef.current?.connected) {
-            socketRef.current.emit("audio_chunk", event.data);
+            socketRef.current.emit("audio_chunk", {
+              audio: event.data,
+              timestamp: Date.now(),
+            });
           }
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const file = new File([blob], "speech.webm", { type: "audio/webm" });
+        try {
+          const blob = new Blob(chunksRef.current, {
+            type: "audio/webm",
+          });
 
-        const formData = new FormData();
-        formData.append("file", file);
+          const file = new File([blob], "speech.webm", {
+            type: "audio/webm",
+          });
 
-        const response = await fetch(`${API_URL}/transcribe`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
+          const formData = new FormData();
+          formData.append("file", file);
 
-        const data = await response.json();
+          const response = await fetch(`${API_URL}/transcribe`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
 
-        if (data.transcript) {
-          setTranscript(data.transcript);
-        } else {
-          alert(data.message || "No transcript returned");
+          const data = await response.json();
+
+          if (response.status === 401) {
+            localStorage.removeItem("token");
+            alert("Session expired. Please login again.");
+            window.location.href = "/login";
+            return;
+          }
+
+          if (data.transcript) {
+            setTranscript(data.transcript);
+          } else {
+            alert(data.message || data.details || "No transcript returned");
+          }
+        } catch (error) {
+          console.error("Transcription error:", error);
+          alert("Transcription failed");
+        } finally {
+          streamRef.current?.getTracks().forEach((track) => track.stop());
         }
-
-        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      console.error(error);
+      console.error("Microphone error:", error);
       alert("Microphone permission denied");
     }
   };
 
   const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
   };
 
   return (
@@ -121,6 +153,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
 
       <div className="flex gap-2 mt-4">
         <button
+          type="button"
           onClick={startRecording}
           disabled={isRecording}
           className="px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
@@ -129,6 +162,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
         </button>
 
         <button
+          type="button"
           onClick={stopRecording}
           disabled={!isRecording}
           className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
