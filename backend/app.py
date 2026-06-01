@@ -20,13 +20,13 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 DB_NAME = "speech_to_text"
 DB_USER = "chethansaiurumu"
-DB_HOST = "localhost"
+DB_HOST = "https://speech-to-text-app-8p3b.onrender.com"
 
 ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
+    "https://speech-to-text-app-8p3b.onrender.com",
+    "https://speech-to-text-app-8p3b.onrender.com",
+    "https://speech-to-text-app-8p3b.onrender.com",
+    "https://speech-to-text-app-8p3b.onrender.com",
 ]
 
 app = Flask(__name__)
