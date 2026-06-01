@@ -116,7 +116,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("http://https://speech-to-text-app-8p3b.onrender.com/transcribe", {
+          const response = await fetch("https://speech-to-text-app-8p3b.onrender.com/transcribe", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
