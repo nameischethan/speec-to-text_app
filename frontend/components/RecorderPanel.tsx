@@ -41,7 +41,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
 
     socket.on("connect_error", (error) => {
       console.error("Socket connection error:", error.message);
-      setSocketStatus("Connection Failed");
+      setSocketStatus("Offline mode");
     });
 
     socket.on("server_message", (data) => {
