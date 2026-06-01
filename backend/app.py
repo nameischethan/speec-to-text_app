@@ -20,7 +20,7 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 DB_NAME = "speech_to_text"
 DB_USER = "chethansaiurumu"
-DB_HOST = "https://speech-to-text-app-8p3b.onrender.com"
+DB_HOST = "localhost"
 
 ALLOWED_ORIGINS = [
     "https://speech-to-text-app-8p3b.onrender.com",
