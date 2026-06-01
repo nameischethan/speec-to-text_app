@@ -43,7 +43,7 @@ CORS(
 
 socketio = SocketIO(
     app,
-    cors_allowed_origins=ALLOWED_ORIGINS,
+    cors_allowed_origins="*",
     async_mode="threading",
     logger=True,
     engineio_logger=True,
