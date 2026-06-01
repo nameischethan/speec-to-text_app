@@ -21,7 +21,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
 
   useEffect(() => {
     const socket = io("https://speech-to-text-app-8p3b.onrender.com", {
-      transports: ["polling", "websocket"],
+      transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
