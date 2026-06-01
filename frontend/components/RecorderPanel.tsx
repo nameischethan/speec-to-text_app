@@ -1,61 +1,34 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { useRef, useState } from "react";
 
 type RecorderPanelProps = {
   setTranscript: (text: string) => void;
 };
 
+const API_URL = "https://speech-to-text-app-8p3b.onrender.com";
+
 export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [partialTranscript, setPartialTranscript] = useState("");
-  const [socketStatus, setSocketStatus] = useState("Connecting...");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const socketRef = useRef<Socket | null>(null);
-  const chunkIndexRef = useRef(0);
+  const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    const socket = io("https://speech-to-text-app-8p3b.onrender.com", {
-      transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
+  const getMimeType = () => {
+    if (MediaRecorder.isTypeSupported("audio/webm")) return "audio/webm";
+    if (MediaRecorder.isTypeSupported("audio/mp4")) return "audio/mp4";
+    if (MediaRecorder.isTypeSupported("audio/ogg")) return "audio/ogg";
+    return "";
+  };
 
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
-      setSocketStatus("Connected");
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-      setSocketStatus("Disconnected");
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Socket connection error:", error.message);
-      setSocketStatus("Offline mode");
-    });
-
-    socket.on("server_message", (data) => {
-      console.log(data.message);
-    });
-
-    socket.on("partial_transcript", (data) => {
-      setPartialTranscript(data.text);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  const getExtension = (mimeType: string) => {
+    if (mimeType.includes("mp4")) return "mp4";
+    if (mimeType.includes("ogg")) return "ogg";
+    return "webm";
+  };
 
   const startRecording = async () => {
     const token = localStorage.getItem("token");
@@ -67,40 +40,33 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getMimeType();
+
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
-      chunkIndexRef.current = 0;
 
       setAudioURL("");
       setTranscript("");
-      setPartialTranscript("");
 
-      mediaRecorder.ondataavailable = async (event) => {
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
-
-          const arrayBuffer = await event.data.arrayBuffer();
-
-          if (socketRef.current?.connected) {
-            socketRef.current.emit("audio_chunk", {
-              audio: arrayBuffer,
-              index: chunkIndexRef.current,
-            });
-          }
-
-          chunkIndexRef.current += 1;
         }
       };
 
       mediaRecorder.onstop = async () => {
+        const finalMimeType = mediaRecorder.mimeType || mimeType || "audio/webm";
+        const extension = getExtension(finalMimeType);
+
         const blob = new Blob(chunksRef.current, {
-          type: "audio/webm",
+          type: finalMimeType,
         });
 
         const url = URL.createObjectURL(blob);
@@ -109,14 +75,14 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
         try {
           setIsLoading(true);
 
-          const file = new File([blob], "speech.webm", {
-            type: "audio/webm",
+          const file = new File([blob], `speech.${extension}`, {
+            type: finalMimeType,
           });
 
           const formData = new FormData();
           formData.append("file", file);
 
-          const response = await fetch("https://speech-to-text-app-8p3b.onrender.com/transcribe", {
+          const response = await fetch(`${API_URL}/transcribe`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -135,9 +101,8 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
 
           if (data.transcript) {
             setTranscript(data.transcript);
-            setPartialTranscript("");
           } else {
-            alert(data.message || "No transcript returned");
+            alert(data.message || data.details || "No transcript returned");
           }
         } catch (error) {
           console.error(error);
@@ -145,36 +110,34 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
         } finally {
           setIsLoading(false);
         }
+
+        streamRef.current?.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorder.start(2000);
+      mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
       console.error(error);
-      alert("Microphone permission denied");
+      alert("Microphone permission denied or not supported on this browser");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   };
 
   return (
     <section className="p-4 sm:p-6 border rounded-xl shadow-sm">
       <h2 className="text-xl font-semibold mb-4">Recorder</h2>
 
-      <p className="mb-2">Status: {isRecording ? "Recording..." : "Not recording"}</p>
+      <p className="mb-2">
+        Status: {isRecording ? "Recording..." : "Not recording"}
+      </p>
 
-      <p className="mb-4 text-sm">Socket: {socketStatus}</p>
-
-      {partialTranscript && (
-        <div className="mb-4 p-3 bg-yellow-100 rounded text-black">
-          Partial: {partialTranscript}
-        </div>
-      )}
+      <p className="mb-4 text-sm text-gray-500">
+        Mobile mode: Socket not required
+      </p>
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -182,7 +145,6 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
           onClick={startRecording}
           disabled={isRecording || isLoading}
           className="px-4 py-2 bg-green-500 text-white rounded disabled:opacity-50"
-          aria-label="Start recording"
         >
           Start Recording
         </button>
@@ -192,7 +154,6 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
           onClick={stopRecording}
           disabled={!isRecording}
           className="px-4 py-2 bg-red-500 text-white rounded disabled:opacity-50"
-          aria-label="Stop recording"
         >
           Stop Recording
         </button>
@@ -201,7 +162,7 @@ export default function RecorderPanel({ setTranscript }: RecorderPanelProps) {
       {audioURL && (
         <a
           href={audioURL}
-          download="recording.webm"
+          download="recording"
           className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded"
         >
           Download Audio

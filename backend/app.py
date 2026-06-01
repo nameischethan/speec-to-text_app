@@ -54,7 +54,7 @@ CONVERTED_FOLDER = "converted"
 CHUNK_FOLDER = "chunks"
 
 MAX_FILE_SIZE = 25 * 1024 * 1024
-ALLOWED_EXTENSIONS = {"webm", "wav", "mp3", "m4a", "ogg"}
+ALLOWED_EXTENSIONS = {"webm", "wav", "mp3", "m4a", "ogg", "mp4", "aac"}
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CONVERTED_FOLDER, exist_ok=True)
