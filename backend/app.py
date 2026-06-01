@@ -23,10 +23,11 @@ DB_USER = "chethansaiurumu"
 DB_HOST = "localhost"
 
 ALLOWED_ORIGINS = [
-    "https://speech-to-text-app-8p3b.onrender.com",
-    "https://speech-to-text-app-8p3b.onrender.com",
-    "https://speech-to-text-app-8p3b.onrender.com",
-    "https://speech-to-text-app-8p3b.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
+    "https://speech-to-text-app-two-henna.vercel.app",
 ]
 
 app = Flask(__name__)
