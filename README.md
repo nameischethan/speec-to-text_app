@@ -251,16 +251,57 @@ GET /history
 
 ## 📝 Changelog
 
-### v1.0.0
+### v1.0.0 — Initial Release
 
-* User authentication
-* Audio recording
-* Speech-to-text conversion
-* Transcript history
-* Transcript download
-* PostgreSQL integration
-* Render backend deployment
-* Vercel frontend deployment
+#### Added
+- User registration and login
+- JWT authentication
+- Audio recording from browser
+- Speech-to-text transcription
+- Transcript history
+- Copy transcript feature
+- Download transcript feature
+- Responsive UI
+- PostgreSQL database integration
+- Vercel frontend deployment
+- Render backend deployment
+
+#### Fixed
+- CORS issues between frontend and backend
+- Production deployment configuration
+- Database connection issues
+- API URL configuration issues
+
+---
+
+## 🚧 Future Enhancements / TODO
+
+### Speaker Diarization
+Identify and separate multiple speakers in a conversation.
+
+### Auto Punctuation
+Automatically improve transcript formatting with punctuation and capitalization.
+
+### AI Summarization
+Generate concise summaries and key points from transcripts.
+
+### Translation Support
+Translate transcripts into multiple languages.
+
+### Mobile Optimization
+Improve recording and transcription experience on mobile devices.
+
+### PDF/DOCX Export
+Allow exporting transcripts as PDF and Word documents.
+
+### Real-Time Transcription
+Display transcription while the user is speaking.
+
+### Transcript Search
+Search and filter saved transcripts.
+
+### User Profile Management
+Profile settings, password changes, and account management.
 
 ---
 
@@ -275,3 +316,4 @@ Built as a full-stack cloud-deployed Speech-to-Text application using Flask, Pos
 ## 📄 License
 
 This project is licensed under the MIT License.
+
