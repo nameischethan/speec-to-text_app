@@ -27,7 +27,7 @@ export default function HistoryPage() {
       }
 
       try {
-        const response = await fetch("http://localhost:5001/transcripts", {
+        const response = await fetch("https://speech-to-text-app-8p3b.onrender.com/transcripts", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

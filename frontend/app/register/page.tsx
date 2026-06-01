@@ -9,7 +9,7 @@ export default function RegisterPage() {
 
   const register = async () => {
     try {
-      const response = await fetch("http://localhost:5001/register", {
+      const response = await fetch("https://speech-to-text-app-8p3b.onrender.com/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
