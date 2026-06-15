@@ -4,11 +4,14 @@ from database import engine
 from models.user import User
 
 from routers.auth import router as auth_router
+from models.document import Document
 from routers.document import router as document_router
 
 app = FastAPI()
 
-User.metadata.create_all(bind=engine)
+from database import Base
+
+Base.metadata.create_all(bind=engine)
 
 app.include_router(
     auth_router,
